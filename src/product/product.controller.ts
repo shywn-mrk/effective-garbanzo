@@ -1,15 +1,19 @@
-import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CreateProductDto } from './product.dto';
 
-@ApiTags('products')
+
+@ApiTags('Products')
 @Controller('products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   @ApiOperation({ summary: 'Create a new product' })
-  @ApiBody({ schema: { example: { name: 'Product A', price: 100 } } })
+  @ApiBody({ type: CreateProductDto })
   async createProduct(@Body() body: { name: string; price: number }) {
     return this.productService.createProduct(body.name, body.price);
   }
