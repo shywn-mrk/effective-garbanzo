@@ -12,8 +12,6 @@ export class AuthService {
   async login(username: string, password: string): Promise<string> {
     const user = await this.userService.validateUser(username, password);
 
-    console.log('user', user);
-
     if (!user) {
       throw new NotFoundException('User not found');
     }
