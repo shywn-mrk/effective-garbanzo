@@ -36,8 +36,8 @@ $ npm install
 
 1. **Clone the Repository**:
    ```bash
-   git clone <repository-url>
-   cd <repository-folder>
+   git clone https://github.com/shywn-mrk/effective-garbanzo.git
+   cd effective-garbanzo
    ```
 
 2. **Run with Docker Compose**:
