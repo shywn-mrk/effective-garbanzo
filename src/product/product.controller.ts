@@ -20,14 +20,6 @@ export class ProductController {
   }
 
   @UseGuards(AuthGuard)
-  @Post(':id/purchase')
-  @ApiOperation({ summary: 'Purchase a product' })
-  @ApiParam({ name: 'id', description: 'Product ID' })
-  async purchaseProduct(@Param('id') id: number) {
-    return this.productService.purchaseProduct(id);
-  }
-
-  @UseGuards(AuthGuard)
   @Get(':id')
   @ApiOperation({ summary: 'Get a product by ID' })
   async getProduct(@Param('id') id: number) {

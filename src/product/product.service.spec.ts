@@ -12,6 +12,7 @@ describe('ProductService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     delete: jest.fn(),
+    findOneBy: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -46,25 +47,27 @@ describe('ProductService', () => {
     });
   });
 
-  describe('purchaseProduct', () => {
-    it('should find and return the purchased product', async () => {
-      const product = { id: 1, name: 'Test Product', price: 100, version: 1 };
-  
-      mockRepository.findOne.mockResolvedValue(product);
-  
-      const result = await service.purchaseProduct(1);
-      expect(result).toEqual(product);
-      expect(mockRepository.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
-    });
-  });
-
   describe('deleteProduct', () => {
     it('should delete a product', async () => {
+      const product = { id: 1, name: 'Test Product', price: 100, version: 1 };
+  
+      mockRepository.findOneBy.mockResolvedValue(product);
+  
       mockRepository.delete.mockResolvedValue({ affected: 1 });
-
+  
       const result = await service.deleteProduct(1);
+  
       expect(result).toBeUndefined();
+      expect(mockRepository.findOneBy).toHaveBeenCalledWith({ id: 1 });
       expect(mockRepository.delete).toHaveBeenCalledWith(1);
+    });
+  
+    it('should throw NotFoundException if product does not exist', async () => {
+      mockRepository.findOneBy.mockResolvedValue(null);
+  
+      await expect(service.deleteProduct(1)).rejects.toThrow('Product not found');
+      expect(mockRepository.findOneBy).toHaveBeenCalledWith({ id: 1 });
+      expect(mockRepository.delete).not.toHaveBeenCalled();
     });
   });
 });

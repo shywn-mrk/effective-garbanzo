@@ -60,6 +60,11 @@ $ npm install
 4. **Database Migrations**:
    Migrations are handled automatically using TypeORM with `synchronize: true`. 
 
+
+## Swagger docs
+
+After running the project, you can visit [Swagger Docs Page](http://127.0.0.1:3000/docs/) in your browser
+
 ## Run tests
 
 ```bash

@@ -16,7 +16,7 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    const payload = { username: user.username, sub: user.id };
+    const payload = { username: user.username, userId: user.id };
     return this.jwtService.sign(payload);
   }
 }

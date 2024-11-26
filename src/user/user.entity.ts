@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { classToPlain, Exclude } from 'class-transformer';
+import { Purchase } from '../purchase/purchase.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 @Entity()
 export class User {
@@ -9,5 +11,11 @@ export class User {
   username: string;
 
   @Column()
+  @Exclude()
   password: string;
+
+  @OneToMany(() => Purchase, (purchase) => purchase.user)
+  purchases: Purchase[];
+
+  toJSON() { return classToPlain(this); }
 }

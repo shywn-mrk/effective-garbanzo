@@ -1,82 +1,130 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
-import { UserService } from './user.service';
-import { AuthService } from '../auth/auth.service';
-import { JwtService } from '@nestjs/jwt';
-import { NotFoundException } from '@nestjs/common';
-import { LoginUserDto } from './user.dto';
-
-const mockUserService = {
-  createUser: jest.fn().mockResolvedValue({ id: 1, username: 'testuser' }),
-  findByUsername: jest.fn().mockResolvedValue({ id: 1, username: 'testuser', password: 'hashedPassword' }),
-  register: jest.fn().mockResolvedValue({ id: 1, username: 'testuser' }),
-};
-
-const mockAuthService = {
-  login: jest.fn().mockResolvedValue({ access_token: 'jwt_token' }),
-};
+import { PurchaseService } from '../purchase/purchase.service';
+import { AuthGuard } from '../auth/auth.guard';
+import { ExecutionContext } from '@nestjs/common';
 
 describe('UserController', () => {
-  let userController: UserController;
-  let userService: UserService;
-  let authService: AuthService;
+  let controller: UserController;
+  let purchaseService: PurchaseService;
+
+  const mockPurchaseService = {
+    getUserPurchases: jest.fn(),
+  };
+
+  const mockAuthGuard = {
+    canActivate: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
       providers: [
-        { provide: UserService, useValue: mockUserService },
-        { provide: AuthService, useValue: mockAuthService },
-        JwtService,
+        {
+          provide: PurchaseService,
+          useValue: mockPurchaseService,
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue(mockAuthGuard)
+      .compile();
 
-    userController = module.get<UserController>(UserController);
-    userService = module.get<UserService>(UserService);
-    authService = module.get<AuthService>(AuthService);
+    controller = module.get<UserController>(UserController);
+    purchaseService = module.get<PurchaseService>(PurchaseService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
-    expect(userController).toBeDefined();
+    expect(controller).toBeDefined();
   });
 
-  describe('register', () => {
-    it('should register a new user', async () => {
-      const createUserDto = { username: 'testuser', password: 'password123' };
-      await userController.register(createUserDto.username, createUserDto.password);
+  describe('getUserPurchases', () => {
+    it('should call PurchaseService.getUserPurchases and return the correct data', async () => {
+      const mockPurchases = [{ id: 1, product: { id: 2 }, quantity: 3 }];
+      const mockUserId = 1;
+      const mockPage = 1;
+      const mockLimit = 10;
 
-      expect(userService.register).toHaveBeenCalledWith(createUserDto.username, createUserDto.password);
+      const mockRequest = {
+        user: { userId: mockUserId },
+        query: { page: mockPage, limit: mockLimit },
+      };
+
+      mockPurchaseService.getUserPurchases.mockResolvedValue(mockPurchases);
+
+      const result = await controller.getUserPurchases(mockRequest);
+
+      expect(mockPurchaseService.getUserPurchases).toHaveBeenCalledWith(
+        mockUserId,
+        mockPage,
+        mockLimit
+      );
+      expect(result).toEqual(mockPurchases);
+    });
+
+    it('should call PurchaseService.getUserPurchases with default page and limit when not provided', async () => {
+      const mockPurchases = [{ id: 1, product: { id: 2 }, quantity: 3 }];
+      const mockUserId = 1;
+
+      const mockRequest = {
+        user: { userId: mockUserId },
+        query: {},
+      };
+
+      mockPurchaseService.getUserPurchases.mockResolvedValue(mockPurchases);
+
+      const result = await controller.getUserPurchases(mockRequest);
+
+      expect(mockPurchaseService.getUserPurchases).toHaveBeenCalledWith(
+        mockUserId,
+        1,
+        10
+      );
+      expect(result).toEqual(mockPurchases);
+    });
+
+    it('should call PurchaseService.getUserPurchases with correct page and limit from query', async () => {
+      const mockPurchases = [{ id: 1, product: { id: 2 }, quantity: 3 }];
+      const mockUserId = 1;
+      const mockPage = 2;
+      const mockLimit = 5;
+
+      const mockRequest = {
+        user: { userId: mockUserId },
+        query: { page: mockPage, limit: mockLimit },
+      };
+
+      mockPurchaseService.getUserPurchases.mockResolvedValue(mockPurchases);
+
+      const result = await controller.getUserPurchases(mockRequest);
+
+      expect(mockPurchaseService.getUserPurchases).toHaveBeenCalledWith(
+        mockUserId,
+        mockPage,
+        mockLimit
+      );
+      expect(result).toEqual(mockPurchases);
     });
   });
 
-  describe('login', () => {
-    it('should login and return a JWT token', async () => {
-      const loginDto: LoginUserDto = { username: 'testuser', password: 'password123' };
-      await userController.login(loginDto.username, loginDto.password);
+  describe('AuthGuard', () => {
+    it('should apply the AuthGuard', async () => {
+      mockAuthGuard.canActivate.mockReturnValue(true);
 
-      expect(authService.login).toHaveBeenCalledWith(loginDto.username, loginDto.password);
-      expect(await userController.login(loginDto.username, loginDto.password)).toEqual({
-        accessToken: { access_token: 'jwt_token' },
-      });
-    });
+      const mockRequest = {
+        user: { userId: 1 },
+        query: {},
+      };
 
-    it('should throw an error if the user does not exist', async () => {
-      mockAuthService.login = jest.fn().mockRejectedValue(new NotFoundException('User not found'));
+      const canActivateResult = mockAuthGuard.canActivate(
+        { switchToHttp: () => ({ getRequest: () => mockRequest }) } as ExecutionContext,
+      );
 
-      await expect(userController.login('invaliduser', 'password123')).rejects.toThrow(NotFoundException);
-    });
-
-    it('should throw an error if the password is incorrect', async () => {
-      mockUserService.findByUsername.mockResolvedValueOnce({
-        id: 1,
-        username: 'testuser',
-        password: 'hashedPassword',
-      });
-      mockAuthService.login.mockImplementationOnce(() => {
-        throw new Error('Invalid credentials');
-      });
-
-      await expect(userController.login('testuser', 'wrongpassword')).rejects.toThrow('Invalid credentials');
+      expect(canActivateResult).toBe(true);
     });
   });
 });

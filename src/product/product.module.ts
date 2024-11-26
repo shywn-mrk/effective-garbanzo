@@ -4,7 +4,7 @@ import { Product } from './product.entity';
 import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from 'src/auth/constants';
+import { jwtConstants } from '../auth/constants';
 
 @Module({
   imports: [
