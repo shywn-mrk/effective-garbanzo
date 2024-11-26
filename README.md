@@ -34,16 +34,31 @@ $ npm install
 
 ## Compile and run the project
 
-```bash
-# development
-$ npm run start
+1. **Clone the Repository**:
+   ```bash
+   git clone <repository-url>
+   cd <repository-folder>
+   ```
 
-# watch mode
-$ npm run start:dev
+2. **Run with Docker Compose**:
+   ```bash
+   docker-compose up --build
+   ```
 
-# production mode
-$ npm run start:prod
-```
+   This will start the application, database, and all required services.
+
+3. **Run Locally (Without Docker)**:
+   - Install dependencies:
+     ```bash
+     npm install
+     ```
+   - Run the application:
+     ```bash
+     npm run start:dev
+     ```
+
+4. **Database Migrations**:
+   Migrations are handled automatically using TypeORM with `synchronize: true`. 
 
 ## Run tests
 
